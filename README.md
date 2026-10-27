@@ -13,8 +13,18 @@ in the core repository until the cutover rehearsal lands them here.
 
 The collector declares the `eshu_dp_vault_live_collector_` metric prefix
 (manifest.yaml `spec.telemetry.metricsPrefix`) but emits nothing under it:
-the claim-serving entrypoint lands in a later lane, so there is no stderr
-diagnostic shape to document yet.
+it is a stateless claim servant with no OTLP handle.
+
+Each served claim writes one bounded JSON diagnostic line to stderr with the
+`event` (`complete`, `failure`, `config_failure`, `unknown_scope`), the
+`scope`, `generation`, and `latency_ms` fields; it never carries tokens,
+Vault addresses, raw Vault paths, or upstream bodies. The extension host's
+process runner does not surface stderr (it keeps only a byte count), so the
+line helps a local run and a test, not an operator in production.
+
+Exit codes: `0` serves one claim (a retryable or terminal SDK result is still
+a served claim); non-zero means the transport failed (oversize request,
+expired deadline, malformed JSON, foreign claim kind, or a usage error).
 
 ## Releasing
 
@@ -26,5 +36,9 @@ summary. Copy that digest into the activation's seed image reference
 (`collector seed --image-ref <repo>@sha256:<digest>`). See
 `scripts/pin-digest.sh` for resolving a pushed tag to its digest reference.
 
-No tags are cut from the deployment-contract lane: the image build unblocks
-when `cmd/collector` (entrypoint plus seed) lands.
+Seed the component home with `collector seed --dest DIR`, which writes
+`DIR/collector` (this binary, mode 0755) and `DIR/manifest.yaml` (the
+embedded manifest). Stamp the deployed digest with `collector seed --dest
+DIR --image-ref <repo>@sha256:<digest>` (or `COLLECTOR_IMAGE_REF`); the
+image cannot embed its own digest, so the repository manifest permanently
+carries the all-zero placeholder digest instead.
