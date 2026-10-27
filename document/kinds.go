@@ -17,6 +17,12 @@ const (
 	// KindCoverageWarning is emitted on partial scope when one namespace or
 	// cluster target fails while others succeed.
 	KindCoverageWarning = "secrets_iam_coverage_warning"
+
+	// VaultLiveSchemaVersionV1 is the shared schema version for all eight
+	// kinds: the core fact-kind registry pins every vault kind (plus the
+	// secrets_iam coverage warning) at 1.0.0, and the pinned factschema
+	// fixture pack ships the v1 JSON Schema for each.
+	VaultLiveSchemaVersionV1 = "1.0.0"
 )
 
 // FactKinds lists every fact kind this collector emits, in stable order. It

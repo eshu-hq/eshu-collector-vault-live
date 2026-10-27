@@ -1,0 +1,75 @@
+apiVersion: eshu.dev/v1alpha1
+kind: ComponentPackage
+metadata:
+  id: dev.eshu.collector.vault-live
+  name: Vault live collector
+  publisher: eshu-hq
+  version: 0.1.0
+spec:
+  compatibleCore: ">=0.0.5 <0.2.0"
+  componentType: collector
+  # Exactly one kind: the host admits one collector kind per satellite
+  # worker and fails closed otherwise. This is the activation scope kind
+  # (vault_live); the vault.* document facts remain emittedFacts under
+  # its grant scope.
+  collectorKinds:
+    - vault_live
+  runtime:
+    sdkProtocol: collector-sdk/v1alpha1
+    adapter: process
+  artifacts:
+    - platform: linux/amd64
+      image: ghcr.io/eshu-hq/eshu-collector-vault-live@sha256:0000000000000000000000000000000000000000000000000000000000000000
+  emittedFacts:
+    - kind: vault_auth_mount
+      payloadSchemaRef: vault_auth_mount
+      schemaVersions:
+        - 1.0.0
+      sourceConfidence:
+        - reported
+    - kind: vault_auth_role
+      payloadSchemaRef: vault_auth_role
+      schemaVersions:
+        - 1.0.0
+      sourceConfidence:
+        - reported
+    - kind: vault_acl_policy
+      payloadSchemaRef: vault_acl_policy
+      schemaVersions:
+        - 1.0.0
+      sourceConfidence:
+        - reported
+    - kind: vault_identity_entity
+      payloadSchemaRef: vault_identity_entity
+      schemaVersions:
+        - 1.0.0
+      sourceConfidence:
+        - reported
+    - kind: vault_identity_alias
+      payloadSchemaRef: vault_identity_alias
+      schemaVersions:
+        - 1.0.0
+      sourceConfidence:
+        - reported
+    - kind: vault_kv_metadata
+      payloadSchemaRef: vault_kv_metadata
+      schemaVersions:
+        - 1.0.0
+      sourceConfidence:
+        - reported
+    - kind: vault_secret_engine_mount
+      payloadSchemaRef: vault_secret_engine_mount
+      schemaVersions:
+        - 1.0.0
+      sourceConfidence:
+        - reported
+    - kind: secrets_iam_coverage_warning
+      payloadSchemaRef: secrets_iam_coverage_warning
+      schemaVersions:
+        - 1.0.0
+      sourceConfidence:
+        - reported
+  telemetry:
+    # Declared only: the collector emits no metric under this prefix. See the
+    # README section "Operator signals".
+    metricsPrefix: eshu_dp_vault_live_collector_
