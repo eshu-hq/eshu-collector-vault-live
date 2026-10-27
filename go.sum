@@ -1,0 +1,4 @@
+github.com/eshu-hq/eshu-sdk/collector v0.1.0-rc.3 h1:IWRyIZzVRyxC/MSFWAToTYChSvO9sI8Fg8v5IYVbLqs=
+github.com/eshu-hq/eshu-sdk/collector v0.1.0-rc.3/go.mod h1:ysNLZcpQe9ZGYFZnTLyYTCHNaLrPRJjb1f9aLPOXdtA=
+github.com/eshu-hq/eshu-sdk/factschema v0.1.0-rc.7 h1:20Q3x+rqSSsQ2fEc4PvfiSFDaoQLNghsaTNgv5xSf5k=
+github.com/eshu-hq/eshu-sdk/factschema v0.1.0-rc.7/go.mod h1:CnwND1yYkq0K/gMO7k746nEKmTKvVCRYrHB3TZpsJqk=
