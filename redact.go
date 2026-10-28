@@ -66,7 +66,8 @@ func normRedactLabel(value string) string {
 
 func writeRedactField(writer interface {
 	Write([]byte) (int, error)
-}, value []byte) {
+}, value []byte,
+) {
 	var length [8]byte
 	binary.BigEndian.PutUint64(length[:], uint64(len(value)))
 	_, _ = writer.Write(length[:])

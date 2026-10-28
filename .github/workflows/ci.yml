@@ -1,0 +1,196 @@
+# Collector CI: thin wrapper over the shared reusable lanes.
+#
+# Stable job names (same in every collector repo; only ci-complete is ever
+# required in a ruleset): lint, test, race, shell, image, boundary,
+# actionlint, govulncheck, gosec, ci-complete. The lane bodies live in
+# eshu-hq/.github go-collector-ci v2, pinned by SHA below; this file keeps
+# path selection (changes), the coverage floor, the weekly schedule
+# follow-through (file-findings), and the top-level ci-complete aggregate,
+# so the required check name never moves. Nested reusable checks surface
+# as "go-ci / <lane>".
+#
+# Path selection happens once, in the changes job (dorny/paths-filter). A PR
+# only pays for lanes its paths can affect. Pushes to main and manual
+# dispatches run every PR lane (a workflow change must prove the lanes still
+# work); the weekly schedule runs every default-on lane (fail closed) and
+# files an issue through file-findings when the security lanes fail.
+#
+# Fixture classification (Eshu #9200 lesson: JSON under code paths is code):
+# manifest.yaml is go:embed'ed by manifest.go:13 and read by
+# manifest_test.go:56; it is also in the image class because the embed
+# means a manifest change rebuilds the image. boundary_test.go reads
+# go.mod, but go.mod changes already run the full Go lanes via the go and
+# deps classes, so go.mod needs no fixtures entry. scripts/pin-digest.sh
+# has no test reader today, and there is no testdata/ tree and no
+# *.example.* or *.json fixtures, so a shell-only PR runs shell only and a
+# fixtures entry for those classes would be dead config. README.md is not
+# read by any test, so prose edits stay in the docs class.
+#
+# Pinned actions (re-verify with git ls -remote when auditing; Dependabot
+# github-actions proposes weekly grouped bumps):
+#   actions/checkout v7.0.1              3d3c42e5aac5ba805825da76410c181273ba90b1
+#   dorny/paths-filter v4.0.3            ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d
+# Lane bodies:
+#   eshu-hq/.github go-collector-ci v2   4d01ab90baf5dd77c21cc1ee6bdf701332613449
+# Go tools (installed at the org pins inside the reusable lanes, never
+# latest): golangci-lint v2.12.2 (same binary Eshu uses; config in
+# .golangci.yml), govulncheck v1.9.0 run with -scan package (Go 1.26
+# SSA-safe), gosec v2.27.1 run with -no-fail (advisory on PRs; scheduled
+# runs fail via gosec-fail-on-findings so findings stay issue-visible).
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  schedule:
+    # Weekly security sweep: govulncheck + gosec (plus the image build).
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # Minimum total statement coverage percent. Starts at the measured
+  # post-ratchet baseline (90.5 on 2026-10-28: 63.5 baseline + client, kv,
+  # and failure-path tests under #11); may only rise as tests land. The
+  # finish line is 90, already cleared.
+  COVERAGE_FLOOR: "90.5"
+
+jobs:
+  changes:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      go: ${{ steps.filter.outputs.go }}
+      fixtures: ${{ steps.filter.outputs.fixtures }}
+      shell: ${{ steps.filter.outputs.shell }}
+      deps: ${{ steps.filter.outputs.deps }}
+      workflows: ${{ steps.filter.outputs.workflows }}
+      image: ${{ steps.filter.outputs.image }}
+      docs: ${{ steps.filter.outputs.docs }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Classify changed paths
+        id: filter
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          filters: |
+            go:
+              - '**/*.go'
+              - 'go.mod'
+              - 'go.sum'
+              - '.golangci.yml'
+              - 'Makefile'
+            fixtures:
+              - 'manifest.yaml'
+            shell:
+              - '**/*.sh'
+            deps:
+              - 'go.mod'
+              - 'go.sum'
+              - '.golangci.yml'
+            workflows:
+              - '.github/workflows/**'
+              - '.github/dependabot.yml'
+            image:
+              - 'Dockerfile'
+              - '.dockerignore'
+              - 'manifest.yaml'
+            docs:
+              - 'README.md'
+              - 'LICENSE'
+              - 'CODEOWNERS'
+              - '**/*.md'
+
+  go-ci:
+    needs: [changes]
+    # Skipped only on docs-only PRs (no lane can be affected). On the weekly
+    # schedule changes is skipped, so schedule is pinned true and every
+    # default-on reusable lane still runs (fail closed). Each run-*
+    # mirrors the lane condition an in-repo workflow would use.
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.go == 'true' || needs.changes.outputs.fixtures == 'true' || needs.changes.outputs.shell == 'true' || needs.changes.outputs.deps == 'true' || needs.changes.outputs.workflows == 'true' || needs.changes.outputs.image == 'true'
+    uses: eshu-hq/.github/.github/workflows/go-collector-ci.yml@4d01ab90baf5dd77c21cc1ee6bdf701332613449 # v2
+    with:
+      module: eshu-collector-vault-live
+      working-directory: .
+      coverage-floor: 90.5
+      go-version-file: go.mod
+      run-image: true
+      image-tag: eshu-collector-vault-live:ci
+      run-lint: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.go == 'true' || needs.changes.outputs.deps == 'true' || needs.changes.outputs.workflows == 'true' }}
+      run-test: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.go == 'true' || needs.changes.outputs.fixtures == 'true' || needs.changes.outputs.deps == 'true' || needs.changes.outputs.workflows == 'true' || needs.changes.outputs.image == 'true' }}
+      run-race: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.go == 'true' || needs.changes.outputs.deps == 'true' || needs.changes.outputs.workflows == 'true' }}
+      run-shell: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.shell == 'true' }}
+      # The replace-directive ban used to live only in boundary_test.go; the
+      # boundary hook runs it as a lane so `make ci` and CI agree.
+      run-boundary: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.go == 'true' || needs.changes.outputs.deps == 'true' || needs.changes.outputs.workflows == 'true' }}
+      boundary-command: "! rg -n '^replace ' go.mod"
+      run-govulncheck: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.deps == 'true' }}
+      run-gosec: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.go == 'true' || needs.changes.outputs.deps == 'true' || needs.changes.outputs.workflows == 'true' }}
+      # Scheduled runs opt into gosec failure so the file-findings job
+      # below can open an issue; PR lanes stay advisory.
+      gosec-fail-on-findings: ${{ github.event_name == 'schedule' }}
+      run-actionlint: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.workflows == 'true' }}
+
+  # Weekly security sweep follow-through: the reusable lanes have no
+  # issue-filing step, so a red schedule run files here instead.
+  file-findings:
+    needs: [go-ci]
+    if: github.event_name == 'schedule' && needs.go-ci.result == 'failure'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: File or update an issue on scheduled findings
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          title="govulncheck/gosec findings (weekly schedule)"
+          body="Weekly security sweep failed. See the triggering workflow run logs; fix by bumping the toolchain or the affected module, then close this issue on a clean run. (No label: this repo has no security label.)"
+          number=$(gh issue list --search "$title in:title" --state open --json number --jq '.[0].number // empty')
+          if [ -z "$number" ]; then
+            gh issue create --title "$title" --body "$body"
+          else
+            gh issue comment "$number" --body "$body"
+          fi
+
+  ci-complete:
+    needs: [changes, go-ci]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: aggregate (pass when needed lanes passed or legitimately skipped)
+        run: |
+          python3 - <<'EOF'
+          import json, os
+          # NEEDS_JSON is toJSON(needs): {job: {"result": ..., "outputs": ...}}.
+          # Compare v["result"] per job: comparing whole job OBJECTS to
+          # "failure" never matches (false-green), and needs.*.result is a
+          # bare ARRAY that kills green runs on AttributeError.
+          # Never change this shape without a seeded red proof.
+          needs = json.loads(os.environ["NEEDS_JSON"])
+          bad = {k: v.get("result") for k, v in needs.items()
+                 if isinstance(v, dict) and v.get("result") in ("failure", "cancelled")}
+          if bad:
+              print("FAIL:", bad)
+              raise SystemExit(1)
+          print("ci-complete: pass (skips allowed)")
+          EOF
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}

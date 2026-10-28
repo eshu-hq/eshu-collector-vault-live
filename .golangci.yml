@@ -1,0 +1,30 @@
+# Org golangci-lint configuration for collector repos.
+#
+# Pinned to golangci-lint v2.12.2 (the version Eshu uses; CI installs
+# `github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2`).
+# When bumping the binary, keep this file's `version:` line in lockstep.
+#
+# Linter set (the org gate contract, same in every collector repo):
+# govet, staticcheck, ineffassign, unused, errcheck, plus the gosimple
+# S-rules (in golangci-lint v2 `gosimple` is not a separate linter name;
+# its checks run under `staticcheck` — S1016 fires as `(staticcheck)`).
+# Formatter: gofumpt (via `golangci-lint fmt --diff`, which fails on drift).
+#
+# No exclusions: the backlog is fixed, not baselined. Any exclusion added
+# later needs a reason and a linked open issue on the same lines.
+version: "2"
+
+linters:
+  # Opt in explicitly so the set is reviewable from this file.
+  # `default: none` keeps a vendor default from silently adding a linter.
+  default: none
+  enable:
+    - govet
+    - staticcheck
+    - ineffassign
+    - unused
+    - errcheck
+
+formatters:
+  enable:
+    - gofumpt
