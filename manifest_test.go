@@ -30,7 +30,7 @@ const placeholderDigest = "sha256:0000000000000000000000000000000000000000000000
 // manifestVersion is the component version release tags follow:
 // release.yml only publishes v<manifestVersion> (or a v<manifestVersion>-*
 // prerelease such as a QA pre-release). Bump this test with manifest.yaml.
-const manifestVersion = "0.1.0"
+const manifestVersion = "0.1.1"
 
 // isPlaceholderImage reports whether image names the placeholder digest.
 func isPlaceholderImage(image string) bool {
