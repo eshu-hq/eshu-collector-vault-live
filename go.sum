@@ -1,5 +1,7 @@
 github.com/eshu-hq/eshu-sdk/collector v0.1.0-rc.3 h1:IWRyIZzVRyxC/MSFWAToTYChSvO9sI8Fg8v5IYVbLqs=
 github.com/eshu-hq/eshu-sdk/collector v0.1.0-rc.3/go.mod h1:ysNLZcpQe9ZGYFZnTLyYTCHNaLrPRJjb1f9aLPOXdtA=
+github.com/eshu-hq/eshu-sdk/collector v0.1.0-rc.4 h1:V8kE6u4KJ2S93po/9uAewswm8RAt38nwe6ppz6Kawy4=
+github.com/eshu-hq/eshu-sdk/collector v0.1.0-rc.4/go.mod h1:ysNLZcpQe9ZGYFZnTLyYTCHNaLrPRJjb1f9aLPOXdtA=
 github.com/eshu-hq/eshu-sdk/factschema v0.1.0-rc.7 h1:20Q3x+rqSSsQ2fEc4PvfiSFDaoQLNghsaTNgv5xSf5k=
 github.com/eshu-hq/eshu-sdk/factschema v0.1.0-rc.7/go.mod h1:CnwND1yYkq0K/gMO7k746nEKmTKvVCRYrHB3TZpsJqk=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405 h1:yhCVgyC4o1eVCa2tZl7eS0r+SDo693bJlVdllGtEeKM=
