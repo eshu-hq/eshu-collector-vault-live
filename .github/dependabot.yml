@@ -1,0 +1,21 @@
+# Dependabot keeps the Go module and GitHub Actions pins current.
+# Security fixes still land as reviewed PRs; the weekly govulncheck lane
+# catches anything Dependabot has not proposed yet.
+version: 2
+updates:
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      go-dependencies:
+        patterns:
+          - "*"
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        patterns:
+          - "*"
