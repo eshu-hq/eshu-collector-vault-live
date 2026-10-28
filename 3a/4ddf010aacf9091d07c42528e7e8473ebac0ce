@@ -1,0 +1,38 @@
+.github/dependabot.yml
+  h_78a442cba0b3e6 1-21
+.github/workflows/ci.yml
+  h_78a442cba0b3e6 1-196
+.golangci.yml
+  h_78a442cba0b3e6 1-30
+CONTRIBUTING.md
+  h_78a442cba0b3e6 1-56
+Makefile
+  h_78a442cba0b3e6 1-32
+client_http_test.go
+  h_78a442cba0b3e6 1-284
+client_views_test.go
+  h_78a442cba0b3e6 1-211
+cmd/collector/run_dispatch_test.go
+  h_78a442cba0b3e6 1-33
+handler_failure_test.go
+  h_78a442cba0b3e6 1-134
+kv_walk_test.go
+  h_78a442cba0b3e6 1-125
+redact.go
+  h_78a442cba0b3e6 69-70
+runtime/doc_pin_test.go
+  h_78a442cba0b3e6 19
+source_client_test.go
+  h_78a442cba0b3e6 1-24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3a4ddf010aacf9091d07c42528e7e8473ebac0ce",
+  "prompts": {},
+  "humans": {
+    "h_78a442cba0b3e6": {
+      "author": "Allen Sanabria <asanabria6910@gmail.com>"
+    }
+  }
+}
