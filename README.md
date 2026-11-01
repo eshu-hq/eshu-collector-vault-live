@@ -28,9 +28,10 @@ expired deadline, malformed JSON, foreign claim kind, or a usage error).
 
 ## Releasing
 
-Tag `v<manifest version>` to publish the image. Use a `v<manifest
-version>-*` prerelease (for example `v0.1.0-qa.1`) for QA images: the release
-workflow publishes `ghcr.io/eshu-hq/eshu-collector-vault-live` with
+Tag `v<manifest version>` on the protected `main` head to publish the image;
+the release workflow refuses a tag that points at any other commit. Use a
+`v<manifest version>-*` prerelease (for example `v0.1.0-qa.1`) for QA images:
+the release workflow publishes `ghcr.io/eshu-hq/eshu-collector-vault-live` with
 build-provenance and SBOM attestations, and reports the digest in the job
 summary. Copy that digest into the activation's seed image reference
 (`collector seed --image-ref <repo>@sha256:<digest>`). See
