@@ -1,45 +1,72 @@
 # eshu-collector-vault-live
 
-Eshu vault-live collector, extracted from the Eshu core repository.
+**Status: pre-release.** Eshu core still owns this data in
+production. This repo has no authority to publish facts on its own
+yet.
 
-**Pre-release. Holds no producer authority until its reviewed cutover
-(eshu-hq/eshu#8869).**
+In a nutshell: this collector reads HashiCorp Vault setup metadata
+and hands Eshu evidence about how Vault is configured. Eshu can
+then answer which auth methods, policies, identities, and secret
+engines a Vault cluster has, without anyone ever reading a secret
+value. The collector only collects and returns evidence; it
+doesn't store anything itself and never changes Vault.
 
-Extraction tracking: [eshu-hq/eshu#8869](https://github.com/eshu-hq/eshu/issues/8869).
-The in-tree extraction census, producer-grant draft, and parity proofs live
-in the core repository until the cutover rehearsal lands them here.
+```mermaid
+flowchart LR
+    V[HashiCorp Vault HTTPS API] --> C[This collector]
+    C --> H[Eshu host process]
+    H --> E[Eshu core]
+```
 
-## Operator signals
+In text: HashiCorp Vault -> this collector -> Eshu host process ->
+Eshu core.
 
-The collector declares the `eshu_dp_vault_live_collector_` metric prefix
-(manifest.yaml `spec.telemetry.metricsPrefix`) but emits nothing under it:
-it is a stateless claim servant with no OTLP handle.
+## When to use it
 
-Each served claim writes one bounded JSON diagnostic line to stderr with the
-`event` (`complete`, `failure`, `config_failure`, `unknown_scope`), the
-`scope`, `generation`, and `latency_ms` fields; it never carries tokens,
-Vault addresses, raw Vault paths, or upstream bodies. The extension host's
-process runner does not surface stderr (it keeps only a byte count), so the
-line helps a local run and a test, not an operator in production.
+Use it when Eshu needs evidence about how a Vault cluster is set
+up: its auth mounts and roles, ACL policies, identity entities and
+aliases, secrets engine mounts, and which KV paths exist.
 
-Exit codes: `0` serves one claim (a retryable or terminal SDK result is still
-a served claim); non-zero means the transport failed (oversize request,
-expired deadline, malformed JSON, foreign claim kind, or a usage error).
+## When not to use it
 
-## Releasing
+- Don't use it to read secret values. That is blocked by design.
+- Don't use it to change Vault. It only reads metadata.
+- Don't use it as a Vault browser for humans.
+  It returns facts to the Eshu host; it has no user interface.
+- Don't put a Vault token in config.
+  Config with a token key is rejected; use `token_env` instead.
 
-Tag `v<manifest version>` on the protected `main` head to publish the image;
-the release workflow refuses a tag that points at any other commit. Use a
-`v<manifest version>-*` prerelease (for example `v0.1.0-qa.1`) for QA images:
-the release workflow publishes `ghcr.io/eshu-hq/eshu-collector-vault-live` with
-build-provenance and SBOM attestations, and reports the digest in the job
-summary. Copy that digest into the activation's seed image reference
-(`collector seed --image-ref <repo>@sha256:<digest>`). See
-`scripts/pin-digest.sh` for resolving a pushed tag to its digest reference.
+## How Eshu runs it
 
-Seed the component home with `collector seed --dest DIR`, which writes
-`DIR/collector` (this binary, mode 0755) and `DIR/manifest.yaml` (the
-embedded manifest). Stamp the deployed digest with `collector seed --dest
-DIR --image-ref <repo>@sha256:<digest>` (or `COLLECTOR_IMAGE_REF`); the
-image cannot embed its own digest, so the repository manifest permanently
-carries the all-zero placeholder digest instead.
+The host runs one claim per process invocation.
+With no arguments (or `--sdk-stdio`) the binary reads one
+`collector-sdk/v1alpha1` request from stdin and writes one result
+to stdout. The host owns claims and commits; this binary never
+commits facts itself.
+
+## Documentation
+
+Start at the [docs index](docs/README.md). Shortcuts people use most:
+
+| Page | What you'll find there |
+|---|---|
+| [Getting started](docs/getting-started/README.md) | Run it once, see facts come back |
+| [Configuration](docs/reference/configuration.md) | Every config field, credentials, and the claim budget |
+| [Facts](docs/reference/facts.md) | The fact kinds it emits, mirroring the manifest |
+| [Diagrams](docs/diagrams/README.md) | Every diagram, with captions and text versions |
+
+## Related repos
+
+- [eshu](https://github.com/eshu-hq/eshu), Eshu core
+- [eshu-sdk](https://github.com/eshu-hq/eshu-sdk), collector and fact-schema contracts
+- [eshu-deploy](https://github.com/eshu-hq/eshu-deploy), deployment charts and activations
+
+## Development
+
+Run `make ci` to check a change the way CI does.
+
+## Contributing, security, and license
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a change.
+There's no `SECURITY.md` in this repo.
+Licensed under MIT; see [LICENSE](LICENSE).
