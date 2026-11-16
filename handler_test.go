@@ -6,6 +6,7 @@ package collector
 import (
 	"context"
 	"encoding/json"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -122,7 +123,7 @@ func TestHandleCompleteEchoesClaimAndValidates(t *testing.T) {
 	if result.State != sdk.ResultComplete {
 		t.Fatalf("State = %q, want complete", result.State)
 	}
-	if result.Claim != claim {
+	if !reflect.DeepEqual(result.Claim, claim) {
 		t.Fatalf("claim not echoed unchanged:\n got: %+v\nwant: %+v", result.Claim, claim)
 	}
 	if result.Generation.ID != claim.GenerationID {
@@ -188,7 +189,7 @@ func TestHandleUnknownScopeIsRetryable(t *testing.T) {
 	if result.State != sdk.ResultRetryable {
 		t.Fatalf("State = %q, want retryable", result.State)
 	}
-	if result.Claim != claim {
+	if !reflect.DeepEqual(result.Claim, claim) {
 		t.Fatalf("claim not echoed unchanged")
 	}
 	if len(result.Facts) != 0 {
